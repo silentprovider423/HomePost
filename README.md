@@ -120,7 +120,7 @@ docs/         setup guide, screenshots
 
 ## License
 
-[MIT](LICENSE). Third-party: SwiftMail (BSD-2-Clause), SwiftNIO / swift-nio-imap / swift-nio-ssl / swift-log / swift-collections (Apache-2.0). Stalwart (AGPL-3.0) is not included – HomePost only talks to it over standard protocols.
+[GPL-3.0](LICENSE) (GNU General Public License v3.0; releases up to this change were published under MIT). Third-party: SwiftMail (BSD-2-Clause), SwiftNIO / swift-nio-imap / swift-nio-ssl / swift-log / swift-collections (Apache-2.0). Stalwart (AGPL-3.0) is not included – HomePost only talks to it over standard protocols.
 
 ---
 
