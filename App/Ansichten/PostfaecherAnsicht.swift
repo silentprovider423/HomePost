@@ -79,6 +79,7 @@ struct PostfaecherAnsicht: View {
     @ViewBuilder private var eingangsZeilen: some View {
         if store.konten.count > 1 {
             zeile(.alleEingaenge, titel: "Alle Posteingänge", symbol: "tray.2", zahl: store.ungelesenGesamt)
+                .accessibilityIdentifier("alleEingaenge")
         }
         ForEach(store.konten) { k in eingangZeile(k) }
     }
@@ -176,7 +177,8 @@ struct PostfaecherAnsicht: View {
             }
             .padding(.leading, CGFloat(p.tiefe) * 18)
         }
-        .accessibilityIdentifier("postfach-\(name)")
+        // sprachunabhängige Kennung (Sonderpostfächer nach Rolle) für UI-Tests
+        .accessibilityIdentifier("postfach-\(p.rolle == .keine ? p.name : p.rolle.rawValue)")
         .contextMenu {
             if p.rolle == .keine {
                 Button("Umbenennen", systemImage: "pencil") { neuerName = p.name; umbenennen = (k.id, p) }

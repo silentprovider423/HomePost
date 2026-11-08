@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Erzeugt Demo-Postfächer für HomePost auf einem Test-Mailserver (nur Testkonten!).
+"""Erzeugt englische Demo-Postfächer für HomePost auf einem Test-Mailserver (nur Testkonten!).
 
 Liest die Zugänge aus der Umgebung (nie aus dem Repo):
   MAIL_HOST, MAIL_JMAP_URL, MAIL_USER1..3, MAIL_PASSWORD1..3
@@ -205,26 +205,26 @@ def seed():
     d = lambda days=0, hours=0, minutes=0: NOW - timedelta(days=days, hours=hours, minutes=minutes)
     for key in USERS:
         ensure_folders(key, [("Archive", "archive", None)])
-    ensure_folders("anna", [("Projekte", None, None), ("Gartenhaus", None, "Projekte"), ("Rechnungen", None, None),
-                            ("Verein", None, None)])
-    ensure_folders("ben", [("Werkstatt", None, None)])
+    ensure_folders("anna", [("Projects", None, None), ("Garden Shed", None, "Projects"), ("Invoices", None, None),
+                            ("Book Club", None, None)])
+    ensure_folders("ben", [("Workshop", None, None)])
 
     A, B, C = addr("anna"), addr("ben"), addr("clara")
 
-    # T1 Grillfest – 4 Nachrichten, drei Teilnehmer, PDF-Anhang
-    t1 = Msg("anna", [B, C], "Grillfest am Samstag",
-             "Hallo ihr beiden,\n\nam Samstag ab 17 Uhr grillen wir bei mir im Garten. Die Einkaufsliste hängt an –"
-             " tragt euch bitte ein, was ihr mitbringt.\n\nLiebe Grüße\nAnna", d(3, 6),
-             attachments=[("Einkaufsliste.pdf", "application/pdf",
-                           pdf(["Einkaufsliste Grillfest", "", "- Grillkohle (Anna)", "- Brot", "- Salat",
-                                "- Getraenke", "- Nachtisch"]))])
-    t1b = Msg("ben", [A], "Re: Grillfest am Samstag",
-              "Bin dabei! Ich bringe Brot und Getränke mit.\n\nBen\n\n" + "Am Samstag schrieb Anna:\n" +
-              quote("am Samstag ab 17 Uhr grillen wir bei mir im Garten."), d(3, 3), cc=[C], reply_to_msg=t1)
-    t1c = Msg("clara", [A], "Re: Grillfest am Samstag",
-              "Ich mache meinen Kartoffelsalat und bringe einen Nachtisch mit.\n\nBis Samstag!\nClara",
+    # T1 Barbecue – 4 messages, three people, PDF attachment
+    t1 = Msg("anna", [B, C], "Barbecue on Saturday",
+             "Hi both,\n\nwe're having a barbecue in my garden on Saturday from 5 pm. The shopping list is attached –"
+             " please add what you'll bring.\n\nCheers,\nAnna", d(3, 6),
+             attachments=[("Shopping-List.pdf", "application/pdf",
+                           pdf(["Barbecue shopping list", "", "- Charcoal (Anna)", "- Bread", "- Salad",
+                                "- Drinks", "- Dessert"]))])
+    t1b = Msg("ben", [A], "Re: Barbecue on Saturday",
+              "Count me in! I'll bring bread and drinks.\n\nBen\n\n" + "On Saturday, Anna wrote:\n" +
+              quote("we're having a barbecue in my garden on Saturday from 5 pm."), d(3, 3), cc=[C], reply_to_msg=t1)
+    t1c = Msg("clara", [A], "Re: Barbecue on Saturday",
+              "I'll make my potato salad and bring a dessert.\n\nSee you Saturday!\nClara",
               d(2, 20), cc=[B], reply_to_msg=t1b)
-    t1d = Msg("anna", [B, C], "Re: Grillfest am Samstag", "Super, dann haben wir alles. Bis Samstag!\n\nAnna",
+    t1d = Msg("anna", [B, C], "Re: Barbecue on Saturday", "Great, then we have everything. See you on Saturday!\n\nAnna",
               d(1, 22), reply_to_msg=t1c)
     for m, frm, rcpts, seen in [(t1, "anna", ["ben", "clara"], ["ben", "clara"]),
                                (t1b, "ben", ["anna", "clara"], ["anna", "clara"]),
@@ -234,101 +234,99 @@ def seed():
         for r in rcpts:
             put(r, INBOX, m, "\\Seen" if r in seen else "")
 
-    # T2 Fotos – zwei Bilder, Antwort, orange markiert
-    t2 = Msg("clara", [A], "Fotos vom Ausflug an den See",
-             "Hallo Anna,\n\nhier die zwei schönsten Bilder vom Sonntag. Das Wetter war einfach perfekt!\n\nClara",
-             d(5, 4), attachments=[("See-Morgen.png", "image/png", png(320, 220, (120, 170, 230), (20, 70, 120))),
-                                   ("See-Abend.png", "image/png", png(320, 220, (250, 170, 110), (60, 40, 110)))])
-    t2b = Msg("anna", [C], "Re: Fotos vom Ausflug an den See", "Wunderschön! Das zweite hänge ich mir auf.\n\nAnna",
+    # T2 Photos – two images, reply, flagged orange
+    t2 = Msg("clara", [A], "Photos from our day at the lake",
+             "Hi Anna,\n\nhere are the two best pictures from Sunday. The weather was just perfect!\n\nClara",
+             d(5, 4), attachments=[("Lake-Morning.png", "image/png", png(320, 220, (120, 170, 230), (20, 70, 120))),
+                                   ("Lake-Evening.png", "image/png", png(320, 220, (250, 170, 110), (60, 40, 110)))])
+    t2b = Msg("anna", [C], "Re: Photos from our day at the lake", "Beautiful! I'm going to frame the second one.\n\nAnna",
               d(4, 21), reply_to_msg=t2)
     put("clara", SENT, t2, "\\Seen")
     put("anna", INBOX, t2, "\\Seen \\Flagged \\Answered $MailFlagBit0")
     put("anna", SENT, t2b, "\\Seen")
     put("clara", INBOX, t2b, "")
 
-    # T3 Gartenhaus – im eigenen Unterordner bei Anna
-    t3 = Msg("ben", [A], "Projekt Gartenhaus – Angebot",
-             "Hallo Anna,\n\nanbei das Angebot der Zimmerei. Lieferung wäre in drei Wochen möglich.\n\nGruß\nBen",
-             d(10, 2), attachments=[("Angebot-Gartenhaus.pdf", "application/pdf",
-                                     pdf(["Angebot Gartenhaus 3 x 4 m", "", "Holz, Dach, Montage", "Summe: 4.380 EUR"]))])
-    t3b = Msg("anna", [B], "Re: Projekt Gartenhaus – Angebot", "Danke! Passt das Fundament noch in den Preis?\n\nAnna",
+    # T3 Garden shed – in a subfolder for Anna
+    t3 = Msg("ben", [A], "Garden shed project – quote",
+             "Hi Anna,\n\nattached is the quote from the carpenter. Delivery would be possible in three weeks.\n\nBen",
+             d(10, 2), attachments=[("Quote-Garden-Shed.pdf", "application/pdf",
+                                     pdf(["Quote: garden shed 3 x 4 m", "", "Timber, roof, assembly", "Total: EUR 4,380"]))])
+    t3b = Msg("anna", [B], "Re: Garden shed project – quote", "Thanks! Is the foundation included in the price?\n\nAnna",
               d(9, 5), reply_to_msg=t3)
-    t3c = Msg("ben", [A], "Re: Projekt Gartenhaus – Angebot",
-              "Das Fundament kommt extra, ungefähr 600 €. Ich frage noch nach.\n\nBen", d(8, 3), reply_to_msg=t3b)
-    put("ben", SENT, t3, "\\Seen"); put("anna", "Projekte/Gartenhaus", t3, "\\Seen \\Answered")
+    t3c = Msg("ben", [A], "Re: Garden shed project – quote",
+              "The foundation is extra, roughly EUR 600. I'll double-check.\n\nBen", d(8, 3), reply_to_msg=t3b)
+    put("ben", SENT, t3, "\\Seen"); put("anna", "Projects/Garden Shed", t3, "\\Seen \\Answered")
     put("anna", SENT, t3b, "\\Seen"); put("ben", INBOX, t3b, "\\Seen")
-    put("ben", SENT, t3c, "\\Seen"); put("anna", "Projekte/Gartenhaus", t3c, "")
+    put("ben", SENT, t3c, "\\Seen"); put("anna", "Projects/Garden Shed", t3c, "")
 
-    # T4 Rechnung (externer Absender) → Ordner Rechnungen
-    t4 = Msg(None, [A], "Ihre Rechnung Oktober 2026",
-             "Guten Tag Frau Berger,\n\nim Anhang finden Sie Ihre Rechnung für Oktober 2026.\n"
-             "Der Betrag wird am 15.11. abgebucht.\n\nIhre Stadtwerke Musterstadt", d(12, 1),
-             frm_raw="Stadtwerke Musterstadt <rechnung@stadtwerke.test>",
-             attachments=[("Rechnung-2026-10.pdf", "application/pdf",
-                           pdf(["Stadtwerke Musterstadt", "Rechnung Oktober 2026", "", "Strom: 61,20 EUR",
-                                "Wasser: 23,10 EUR", "Summe: 84,30 EUR"]))])
-    put("anna", "Rechnungen", t4, "\\Seen")
+    # T4 Invoice (external sender) → Invoices
+    t4 = Msg(None, [A], "Your invoice for October 2026",
+             "Dear Ms Berger,\n\nplease find attached your invoice for October 2026.\n"
+             "The amount will be debited on 15 November.\n\nCity Utilities", d(12, 1),
+             frm_raw="City Utilities <billing@utilities.test>",
+             attachments=[("Invoice-2026-10.pdf", "application/pdf",
+                           pdf(["City Utilities", "Invoice October 2026", "", "Electricity: EUR 61.20",
+                                "Water: EUR 23.10", "Total: EUR 84.30"]))])
+    put("anna", "Invoices", t4, "\\Seen")
 
-    # T5 Newsletter (HTML mit Fernbild → Banner „Bilder nicht geladen“)
+    # T5 Newsletter (HTML with remote image → "images not loaded" banner)
     html = ("<html><body style='font-family:-apple-system,Helvetica'>"
-            "<img src='https://example.org/banner-buecherei.png' width='560' alt='Bücherei am Markt'>"
-            "<h2>Neu im November</h2><p>Liebe Leserinnen und Leser,</p>"
-            "<p>ab sofort gibt es <b>40 neue Krimis</b> und unseren Lesekreis jeden Dienstag um 19 Uhr.</p>"
-            "<ul><li>Lesung: „Herbstwind“ – Fr., 20. Nov.</li><li>Bastelnachmittag für Kinder – Sa., 21. Nov.</li></ul>"
-            "<p><a href='https://example.org/programm'>Ganzes Programm ansehen</a></p></body></html>")
-    t5 = Msg(None, [A], "Neu im November: Krimis, Lesekreis & Lesung",
-             "Neu im November: 40 neue Krimis, Lesekreis dienstags 19 Uhr.", d(1, 3), html=html,
-             frm_raw="Bücherei am Markt <newsletter@buecherei.test>",
-             extra={"List-Unsubscribe": "<mailto:abmelden@buecherei.test>", "List-Id": "<news.buecherei.test>"})
+            "<img src='https://example.org/library-banner.png' width='560' alt='Market Street Library'>"
+            "<h2>New in November</h2><p>Dear readers,</p>"
+            "<p>we have <b>40 new crime novels</b> and our reading circle meets every Tuesday at 7 pm.</p>"
+            "<ul><li>Author reading: “Autumn Wind” – Fri, 20 Nov</li><li>Craft afternoon for kids – Sat, 21 Nov</li></ul>"
+            "<p><a href='https://example.org/programme'>See the full programme</a></p></body></html>")
+    t5 = Msg(None, [A], "New in November: crime novels, reading circle & author talk",
+             "New in November: 40 new crime novels, reading circle on Tuesdays at 7 pm.", d(1, 3), html=html,
+             frm_raw="Market Street Library <news@library.test>",
+             extra={"List-Unsubscribe": "<mailto:unsubscribe@library.test>", "List-Id": "<news.library.test>"})
     put("anna", INBOX, t5, "")
 
-    # T6 Kurze Frage – unbeantwortet, rot markiert, ungelesen
-    t6 = Msg("clara", [A], "Kurze Frage zum Buchclub",
-             "Hi Anna,\n\nlesen wir im Dezember „Der Leuchtturm“ oder doch etwas Lustiges? Sag mir bis Freitag"
-             " Bescheid.\n\nClara", d(0, 2))
+    # T6 Quick question – unanswered, flagged red, unread
+    t6 = Msg("clara", [A], "Quick question about book club",
+             "Hi Anna,\n\nare we reading “The Lighthouse” in December or something funnier? Let me know by Friday."
+             "\n\nClara", d(0, 2))
     put("clara", SENT, t6, "\\Seen"); put("anna", INBOX, t6, "\\Flagged")
 
-    # T7 Archiv
-    t7 = Msg("ben", [A], "Termin Zahnarzt verschoben?",
-             "Hast du den Termin am Mittwoch schon verschoben? Sonst fahre ich dich hin.\n\nBen", d(6, 1))
+    # T7 Archive
+    t7 = Msg("ben", [A], "Dentist appointment moved?",
+             "Did you already move the appointment on Wednesday? Otherwise I'll drive you there.\n\nBen", d(6, 1))
     put("ben", SENT, t7, "\\Seen"); put("anna", ARCHIVE, t7, "\\Seen")
 
-    # T8 Spam, T9 Papierkorb, T10 Entwurf
-    t8 = Msg(None, [A], "Sie haben gewonnen!!! Jetzt Preis abholen",
-             "Herzlichen Glückwunsch! Klicken Sie hier, um Ihren Preis abzuholen.", d(2, 8),
-             frm_raw="Gewinnspiel <gewinn@lotterie.test>")
+    # T8 junk, T9 trash, T10 draft
+    t8 = Msg(None, [A], "You have won!!! Claim your prize now",
+             "Congratulations! Click here to claim your prize.", d(2, 8), frm_raw="Prize Draw <win@lottery.test>")
     put("anna", JUNK, t8, "")
-    t9 = Msg("clara", [A], "Alte Erinnerung: Bücher zurückgeben", "Denk an die Bücher!", d(20))
+    t9 = Msg("clara", [A], "Old reminder: return the books", "Don't forget the library books!", d(20))
     put("anna", TRASH, t9, "\\Seen")
-    t10 = Msg("anna", [B], "Urlaubsplanung 2027",
-              "Hallo Ben,\n\nwas hältst du von zwei Wochen Schweden im Juni? Ich habe schon", d(0, 5))
+    t10 = Msg("anna", [B], "Holiday plans 2027",
+              "Hi Ben,\n\nwhat do you think about two weeks in Sweden in June? I've already", d(0, 5))
     put("anna", DRAFTS, t10, "\\Seen \\Draft")
 
-    # Weitere E-Mails für eine volle Liste
+    # More mail for a full list
     fill = [
-        ("Paketdienst Express <info@paket.test>", "Ihr Paket ist unterwegs",
-         "Ihre Sendung 00340 4345 2210 wird morgen zwischen 10 und 14 Uhr zugestellt.", d(0, 7), "", INBOX),
-        ("Gartenverein Sonnenhang <vorstand@gartenverein.test>", "Einladung zur Jahresversammlung",
-         "Liebe Mitglieder,\n\ndie Jahresversammlung findet am 28. November um 18 Uhr im Vereinsheim statt.\n\n"
-         "Der Vorstand", d(4, 2), "\\Seen", "Verein"),
-        ("Wochenmarkt Musterstadt <hallo@wochenmarkt.test>", "Diese Woche frisch: Kürbisse & Äpfel",
-         "Am Donnerstag gibt es frische Kürbisse, Äpfel und neuen Honig vom Imker.", d(2, 1), "\\Seen", INBOX),
-        ("Fahrradladen Speiche <werkstatt@speiche.test>", "Ihr Rad ist fertig",
-         "Ihr Fahrrad ist repariert und kann ab heute abgeholt werden. Öffnungszeiten: Mo–Fr 9–18 Uhr.", d(7, 4),
+        ("Express Parcels <info@parcels.test>", "Your parcel is on its way",
+         "Your parcel 00340 4345 2210 will be delivered tomorrow between 10 am and 2 pm.", d(0, 7), "", INBOX),
+        ("Sunny Hill Garden Club <board@gardenclub.test>", "Invitation to the annual meeting",
+         "Dear members,\n\nthe annual meeting takes place on 28 November at 6 pm in the clubhouse.\n\nThe board",
+         d(4, 2), "\\Seen", "Book Club"),
+        ("Farmers Market <hello@market.test>", "Fresh this week: pumpkins & apples",
+         "On Thursday we have fresh pumpkins, apples and new honey from the beekeeper.", d(2, 1), "\\Seen", INBOX),
+        ("Spoke Bike Shop <workshop@spoke.test>", "Your bike is ready",
+         "Your bike has been repaired and can be picked up from today. Opening hours: Mon–Fri 9 am – 6 pm.", d(7, 4),
          "\\Seen \\Flagged $MailFlagBit2", INBOX),
     ]
     for frm_raw, subj, body, when, flags, box in fill:
         put("anna", box, Msg(None, [A], subj, body, when, frm_raw=frm_raw), flags)
 
-    put("ben", "Werkstatt", Msg(None, [B], "Werkstatt-Termin bestätigt",
-                                 "Ihr Termin am Montag um 8 Uhr ist bestätigt.", d(3, 2),
-                                 frm_raw="Autohaus Nord <service@autohaus.test>"), "")
+    put("ben", "Workshop", Msg(None, [B], "Service appointment confirmed",
+                               "Your appointment on Monday at 8 am is confirmed.", d(3, 2),
+                               frm_raw="North Garage <service@garage.test>"), "")
 
-    # Live über SMTP: Ben → Anna (prüft Versandweg und Zustellung)
+    # Live via SMTP: Ben → Anna (checks submission and delivery)
     mail, pw, _ = USERS["ben"]
-    live = Msg("ben", [A], "Neue Werkzeugkiste für das Gartenhaus",
-               "Hi Anna,\n\nich habe noch eine Werkzeugkiste übrig – soll ich sie am Samstag mitbringen?\n\nBen",
-               NOW)
+    live = Msg("ben", [A], "Spare toolbox for the garden shed",
+               "Hi Anna,\n\nI have a spare toolbox – shall I bring it on Saturday?\n\nBen", NOW)
     s = smtplib.SMTP_SSL(HOST, 465, context=CTX, timeout=20)
     s.login(mail, pw)
     s.sendmail(mail, [USERS["anna"][0]], live.raw)

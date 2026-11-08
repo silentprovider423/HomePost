@@ -20,7 +20,7 @@ if grep -raqiF -e "$USER" -e "$HOME" Payload; then
   rm -rf Payload; exit 1
 fi
 # Debug-Anmeldung über die Startumgebung darf in Release nicht enthalten sein
-if grep -raqF "HOMEPOST_KONTO" Payload; then
+if grep -raqF "HOMEPOST_" Payload; then
   echo "FEHLER: Debug-Anmeldung in der Release-App gefunden."; rm -rf Payload; exit 1
 fi
 zip -qr build-ipa/HomePost.ipa Payload; rm -rf Payload

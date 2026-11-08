@@ -13,11 +13,11 @@ HomePost is an independent iPhone mail client for self-hosted mail servers. It a
 > Not affiliated with Apple or Stalwart Labs.
 
 <p align="center">
-  <img src="docs/screenshots/1-postfaecher.png" width="160" alt="Mailboxes">
-  <img src="docs/screenshots/2-eingang.png" width="160" alt="Inbox">
-  <img src="docs/screenshots/3-konversation.png" width="160" alt="Conversation">
-  <img src="docs/screenshots/4-anhaenge.png" width="160" alt="Attachments">
-  <img src="docs/screenshots/5-verfassen.png" width="160" alt="Compose">
+  <img src="docs/screenshots/1-mailboxes.png" width="160" alt="Mailboxes">
+  <img src="docs/screenshots/2-inbox.png" width="160" alt="Inbox">
+  <img src="docs/screenshots/3-conversation.png" width="160" alt="Conversation">
+  <img src="docs/screenshots/4-attachments.png" width="160" alt="Attachments">
+  <img src="docs/screenshots/5-compose.png" width="160" alt="Compose">
 </p>
 <p align="center"><sub>Screenshots with demo mailboxes on a test server (fictional people, <code>test.local</code>).</sub></p>
 
@@ -98,7 +98,7 @@ TEST_ENV=~/test.env SIM_UDID=<simulator-udid> ./sim-run.sh            # account 
 TEST_ENV=~/test.env SIM_UDID=<simulator-udid> tools/run-tests.sh      # unit tests (both backends) + UI tests
 ```
 
-Debug builds read `HOMEPOST_KONTO1…5` from the launch environment (`jmap;<url>;<user>;<password>;<name>` or `imap;<host>;<user>;<password>;<name>[;unverschluesselt]`) so the simulator needs no typing. Release builds never contain this (checked by `build-ipa.sh`).
+Debug builds can sign in from the launch environment, nothing is stored (no keychain): one account via `HOMEPOST_SERVER` (JMAP URL such as `http://192.168.1.10:8080`, or an IMAP/SMTP host), `HOMEPOST_USER`, `HOMEPOST_PASSWORD`, optional `HOMEPOST_NAME`, `HOMEPOST_PROTOCOL` (`jmap`/`imap`), `HOMEPOST_INSECURE=1` (home-network test server without TLS), `HOMEPOST_IMAP_PORT`, `HOMEPOST_SMTP_PORT`. Keep these in a git-ignored `.test-account` file. Several accounts: `HOMEPOST_KONTO1…5` (`jmap;<url>;<user>;<password>;<name>` or `imap;<host>;<user>;<password>;<name>[;unverschluesselt]`) so the simulator needs no typing. Release builds never contain this (checked by `build-ipa.sh`).
 
 ## Privacy
 

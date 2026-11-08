@@ -15,6 +15,10 @@ final class HomePostUITests: XCTestCase {
         app = XCUIApplication()
         app.launchEnvironment["HOMEPOST_KONTO1"] = "jmap;\(url);\(u1);\(p1);Anna Berger"
         app.launchEnvironment["HOMEPOST_KONTO2"] = "imap;\(host);\(u2);\(p2);Ben Okafor;unverschluesselt"
+        // Bildschirmfotos fürs README auf Englisch (Oberfläche folgt sonst der Simulator-Sprache)
+        if let sprache = env["SCREENSHOT_LANG"], !sprache.isEmpty {
+            app.launchArguments += ["-AppleLanguages", "(\(sprache))", "-AppleLocale", sprache == "en" ? "en_US" : sprache]
+        }
     }
 
     private func element(_ id: String) -> XCUIElement {
@@ -40,19 +44,19 @@ final class HomePostUITests: XCTestCase {
         let anna = element("postfach-Anna Berger")
         XCTAssertTrue(anna.waitForExistence(timeout: 60), "Posteingang von Konto 1 fehlt")
         XCTAssertTrue(element("postfach-Ben Okafor").exists, "IMAP-Konto fehlt")
-        XCTAssertTrue(app.staticTexts["Alle Posteingänge"].exists)
-        bild("1-postfaecher")
+        XCTAssertTrue(element("alleEingaenge").exists)
+        bild("1-mailboxes")
         anna.tap()
-        let grill = zeile("Re: Grillfest")
+        let grill = zeile("Re: Barbecue")
         XCTAssertTrue(grill.waitForExistence(timeout: 60))
-        bild("2-eingang")
+        bild("2-inbox")
         grill.tap()
         let betreff = element("betreff")
         XCTAssertTrue(betreff.waitForExistence(timeout: 30))
         XCTAssertTrue(app.staticTexts["Clara Lindqvist"].waitForExistence(timeout: 30))
-        XCTAssertTrue(app.webViews.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Kartoffelsalat'")).firstMatch
+        XCTAssertTrue(app.webViews.staticTexts.containing(NSPredicate(format: "label CONTAINS 'potato salad'")).firstMatch
             .waitForExistence(timeout: 30), "Inhalt nicht geladen")
-        bild("3-konversation")
+        bild("3-conversation")
     }
 
     func testAnhangUndBilderBanner() throws {
@@ -60,15 +64,15 @@ final class HomePostUITests: XCTestCase {
         let anna = element("postfach-Anna Berger")
         XCTAssertTrue(anna.waitForExistence(timeout: 60))
         anna.tap()
-        let fotos = zeile("Fotos vom Ausflug")
+        let fotos = zeile("Photos from our day")
         XCTAssertTrue(fotos.waitForExistence(timeout: 60))
         fotos.tap()
-        XCTAssertTrue(element("anhang-See-Morgen.png").waitForExistence(timeout: 30), "Anhang fehlt")
-        _ = app.webViews.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Wetter'")).firstMatch.waitForExistence(timeout: 20)
+        XCTAssertTrue(element("anhang-Lake-Morning.png").waitForExistence(timeout: 30), "Anhang fehlt")
+        _ = app.webViews.staticTexts.containing(NSPredicate(format: "label CONTAINS 'weather'")).firstMatch.waitForExistence(timeout: 20)
         sleep(2)
-        bild("4-anhaenge")
+        bild("4-attachments")
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        let news = zeile("Neu im November")
+        let news = zeile("New in November")
         XCTAssertTrue(news.waitForExistence(timeout: 30))
         news.tap()
         XCTAssertTrue(element("bilderLaden").waitForExistence(timeout: 30), "Banner für blockierte Bilder fehlt")
@@ -79,7 +83,7 @@ final class HomePostUITests: XCTestCase {
         let anna = element("postfach-Anna Berger")
         XCTAssertTrue(anna.waitForExistence(timeout: 60))
         anna.tap()
-        let paket = zeile("Ihr Paket")
+        let paket = zeile("Your parcel")
         XCTAssertTrue(paket.waitForExistence(timeout: 60))
         // nach links: Löschen · Markieren · Mehr
         paket.swipeLeft()
@@ -111,19 +115,19 @@ final class HomePostUITests: XCTestCase {
         XCTAssertTrue(an.waitForExistence(timeout: 20))
         an.tap()
         an.typeText(ProcessInfo.processInfo.environment["MAIL_USER3"] ?? "")
-        let betreff = "UI-Test \(Int.random(in: 1000...9999))"
+        let betreff = "Lunch on Friday? \(Int.random(in: 10...99))"
         let feldBetreff = element("feldBetreff")
         feldBetreff.tap()
         feldBetreff.typeText(betreff)
         let text = element("feldText")
         text.tap()
-        text.typeText("Hallo aus dem UI-Test. ")
-        bild("5-verfassen")
+        text.typeText("Hello from the UI test. ")
+        bild("5-compose")
         element("senden").tap()
         XCTAssertTrue(element("sendenWiderrufen").waitForExistence(timeout: 10), "„Senden widerrufen“ fehlt")
         // nach der Verzögerung in „Gesendet“
         XCTAssertTrue(element("sendenWiderrufen").waitForNonExistence(timeout: 60))
-        let gesendet = element("postfach-Gesendet")
+        let gesendet = element("postfach-gesendet")
         XCTAssertTrue(gesendet.waitForExistence(timeout: 20))
         gesendet.tap()
         XCTAssertTrue(zeile(betreff).waitForExistence(timeout: 60), "gesendete E‑Mail nicht in Gesendet")

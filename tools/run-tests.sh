@@ -12,6 +12,7 @@ for v in MAIL_HOST MAIL_JMAP_URL MAIL_USER1 MAIL_PASSWORD1 MAIL_USER2 MAIL_PASSW
   export "TEST_RUNNER_$v=${!v}"
 done
 [ -n "${SCREENSHOT_DIR:-}" ] && mkdir -p "$SCREENSHOT_DIR" && export TEST_RUNNER_SCREENSHOT_DIR="$SCREENSHOT_DIR"
+[ -n "${SCREENSHOT_LANG:-}" ] && export TEST_RUNNER_SCREENSHOT_LANG="$SCREENSHOT_LANG"
 xcodegen generate -q
 ZIEL=()
 [ $# -gt 0 ] && ZIEL=(-only-testing:"$1")

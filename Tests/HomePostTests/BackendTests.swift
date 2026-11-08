@@ -60,13 +60,13 @@ class BackendGemeinsam: XCTestCase {
         let b = try backend(1)
         let eingang = try await postfach(b, .eingang)
         let mails = try await b.nachrichten(in: eingang, anzahl: 50)
-        let grill = try XCTUnwrap(mails.first { $0.betreff.contains("Grillfest") })
+        let grill = try XCTUnwrap(mails.first { $0.betreff.contains("Barbecue") })
         let konv = try await b.konversation(zu: grill)
         XCTAssertGreaterThanOrEqual(konv.count, 3, "Konversation über Eingang + Gesendet")
         XCTAssertEqual(konv.map(\.datum), konv.map(\.datum).sorted())
         let erste = try XCTUnwrap(konv.first)
         let inhalt = try await b.inhalt(von: erste)
-        let pdf = try XCTUnwrap(inhalt.anhaenge.first { $0.name == "Einkaufsliste.pdf" })
+        let pdf = try XCTUnwrap(inhalt.anhaenge.first { $0.name == "Shopping-List.pdf" })
         let daten = try await b.anhang(pdf, von: erste)
         XCTAssertTrue(daten.starts(with: Data("%PDF".utf8)))
         XCTAssertNotNil(inhalt.text)
@@ -101,8 +101,8 @@ class BackendGemeinsam: XCTestCase {
 
     func testSuche() async throws {
         let b = try backend(1)
-        let treffer = try await b.suchen("Werkzeugkiste", in: nil)
-        XCTAssertTrue(treffer.contains { $0.betreff.contains("Werkzeugkiste") })
+        let treffer = try await b.suchen("toolbox", in: nil)
+        XCTAssertTrue(treffer.contains { $0.betreff.contains("toolbox") })
     }
 
     func testSendenMitAnhang() async throws {
@@ -214,8 +214,8 @@ final class IMAPBackendTests: BackendGemeinsam {
 
     override func testSuche() async throws {
         let b = try backend(1)
-        let treffer = try await b.suchen("Gartenhaus", in: nil)
-        XCTAssertTrue(treffer.contains { $0.betreff.contains("Gartenhaus") })
+        let treffer = try await b.suchen("Garden", in: nil)
+        XCTAssertTrue(treffer.contains { $0.betreff.contains("Garden shed") })
     }
 
     func testTLSMitSelbstsigniertemZertifikatWirdAbgelehnt() async throws {

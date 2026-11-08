@@ -654,13 +654,15 @@ final class MailStore {
 }
 
 #if DEBUG
-/// Debug-Builds: Anmeldung über die Startumgebung (Simulator-Tests ohne Passwort-Tippen), nie in Release.
+/// Debug-Builds: Anmeldung über die Startumgebung (Simulator-/iPhone-Tests ohne Passwort-Tippen), nie in Release.
+///   HOMEPOST_SERVER/USER/PASSWORD (siehe einzelKonto) oder mehrere Konten:
 ///   HOMEPOST_KONTO1="jmap;<url>;<benutzer>;<passwort>;<Name>"
 ///   HOMEPOST_KONTO2="imap;<host>;<benutzer>;<passwort>;<Name>;unverschluesselt"
 enum DebugAnmeldung {
     static func konten() -> [(KontoKonfiguration, String)]? {
         let env = ProcessInfo.processInfo.environment
         var ergebnis: [(KontoKonfiguration, String)] = []
+        if let k = einzelKonto(env) { ergebnis.append(k) }
         for i in 1...5 {
             guard let s = env["HOMEPOST_KONTO\(i)"] else { continue }
             let t = s.components(separatedBy: ";")
@@ -680,6 +682,33 @@ enum DebugAnmeldung {
             ergebnis.append((k, t[3]))
         }
         return ergebnis.isEmpty ? nil : ergebnis
+    }
+
+    /// Einzelkonto wie bei den anderen Apps (iPhone-Test per devicectl, .test-account):
+    ///   HOMEPOST_SERVER   JMAP-URL (http://host:8080 / https://host) oder IMAP/SMTP-Host
+    ///   HOMEPOST_USER, HOMEPOST_PASSWORD, optional HOMEPOST_NAME
+    ///   HOMEPOST_PROTOCOL jmap|imap (Standard: URL → jmap, reiner Host → imap)
+    ///   HOMEPOST_INSECURE=1 unverschlüsselt (nur Heimnetz-Testserver), HOMEPOST_IMAP_PORT, HOMEPOST_SMTP_PORT
+    /// Nichts davon wird gespeichert (kein Schlüsselbund, keine UserDefaults).
+    static func einzelKonto(_ env: [String: String]) -> (KontoKonfiguration, String)? {
+        guard let server = env["HOMEPOST_SERVER"], !server.isEmpty, let user = env["HOMEPOST_USER"], !user.isEmpty,
+              let pw = env["HOMEPOST_PASSWORD"], !pw.isEmpty else { return nil }
+        let unsicher = ["1", "true", "yes", "ja"].contains((env["HOMEPOST_INSECURE"] ?? "").lowercased())
+        let name = env["HOMEPOST_NAME"].flatMap { $0.isEmpty ? nil : $0 } ?? user
+        let istURL = server.contains("://")
+        let proto: MailProtokoll = env["HOMEPOST_PROTOCOL"].map { $0.lowercased() == "imap" ? .imap : .jmap } ?? (istURL ? .jmap : .imap)
+        var k = KontoKonfiguration(id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!, name: name,
+                                   vollerName: name, adresse: user, benutzer: user, protokoll: proto)
+        let host = istURL ? (URL(string: server)?.host ?? server) : server
+        if proto == .jmap {
+            k.jmapURL = istURL ? server : (unsicher ? "http://\(server):8080" : "https://\(server)")
+        } else {
+            k.imapHost = host; k.smtpHost = host
+            k.sicherheit = unsicher ? .unverschluesselt : .tls
+            k.imapPort = Int(env["HOMEPOST_IMAP_PORT"] ?? "") ?? (unsicher ? 143 : 993)
+            k.smtpPort = Int(env["HOMEPOST_SMTP_PORT"] ?? "") ?? (unsicher ? 587 : 465)
+        }
+        return (k, pw)
     }
 }
 #endif
