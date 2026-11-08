@@ -1,0 +1,12 @@
+build/
+build-ipa/
+DerivedData/
+Payload/
+*.xcodeproj/
+*.ipa
+.DS_Store
+# Eigenes / Geheimes
+.test-account
+.sim-udid
+*.env
+docs/screenshots/raw/

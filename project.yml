@@ -1,0 +1,91 @@
+name: HomePost
+options:
+  bundleIdPrefix: org.homeroll
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: de
+packages:
+  SwiftMail:
+    url: https://github.com/Cocoanetics/SwiftMail
+    # 1.16.0 – Revision statt Version, weil SwiftMail swift-nio-imap selbst per Revision einbindet
+    revision: 88c45cbd31b347b373f7c87e197be63eb95efbc2
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+targets:
+  HomePost:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: Kern
+      - path: Resources
+        buildPhase: resources
+    dependencies:
+      - package: SwiftMail
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDisplayName: HomePost
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, de]
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIBackgroundModes: [fetch, processing]
+        BGTaskSchedulerPermittedIdentifiers: [org.homeroll.homepost.abruf]
+        NSLocalNetworkUsageDescription: "Verbindung zu deinem Mailserver im Heimnetz."
+        NSPhotoLibraryUsageDescription: "Damit du Fotos an E‑Mails anhängen kannst."
+        NSPhotoLibraryAddUsageDescription: "Damit Bilder aus E‑Mails in deinen Fotos gesichert werden können."
+        CFBundleURLTypes:
+          - CFBundleURLName: org.homeroll.homepost
+            CFBundleURLSchemes: [homepost, mailto]
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.homeroll.homepost
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  HomePostTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/HomePostTests
+    dependencies:
+      - target: HomePost
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: org.homeroll.homepost.tests
+  HomePostUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: HomePost
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: org.homeroll.homepost.uitests
+schemes:
+  HomePost:
+    build:
+      targets:
+        HomePost: all
+        HomePostTests: [test]
+        HomePostUITests: [test]
+    test:
+      targets: [HomePostTests, HomePostUITests]
+      gatherCoverageData: false
