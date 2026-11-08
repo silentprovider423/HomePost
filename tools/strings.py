@@ -94,7 +94,7 @@ EN = {
     "iOS ruft im Hintergrund in unregelmäßigen Abständen neue E‑Mails ab. Sofortige Mitteilungen bräuchten einen eigenen Push-Dienst auf deinem Server.":
         "iOS fetches new mail in the background at irregular intervals. Instant notifications would need your own push service on your server.",
     "Übersicht": "Quick Look", "Dokument scannen": "Scan Document", "Gescanntes Dokument": "Scanned Document",
-    "Ort des Postfachs": "Mailbox Location", "%lld ausgewählt ": "%lld selected",
+    "Ort des Postfachs": "Mailbox Location", "Keine Verbindung": "No Connection", "%lld ausgewählt ": "%lld selected",
 }
 
 

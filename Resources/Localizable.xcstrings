@@ -1332,6 +1332,17 @@
         }
       }
     },
+    "Keine Verbindung": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Connection"
+          }
+        }
+      }
+    },
     "Keine Verbindung zum Server: %@": {
       "extractionState": "manual",
       "localizations": {

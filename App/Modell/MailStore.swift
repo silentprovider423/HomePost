@@ -1,4 +1,5 @@
 import Foundation
+import Network
 import SwiftUI
 import UserNotifications
 
@@ -96,6 +97,7 @@ final class MailStore {
         Einstellung.registrieren()
         vip = Set(Einstellung.d.stringArray(forKey: Einstellung.vip) ?? [])
         kontenLaden()
+        pfadBeobachten()
     }
 
     // MARK: Konten
@@ -179,6 +181,7 @@ final class MailStore {
         do {
             let p = try await backend(konto).postfaecher()
             postfaecher[konto] = p
+            verbindungOK()
         } catch {
             melde(error)
         }
@@ -248,6 +251,7 @@ final class MailStore {
                 for i in IntelligentesPostfach.allCases { listen[.intelligent(i)] = filtern(alle, i) }
             }
             letzteAktualisierung = Date()
+            verbindungOK()
         } catch {
             melde(error)
         }
@@ -288,6 +292,7 @@ final class MailStore {
 
     /// Statuszeile wie Apple („Gerade aktualisiert“, „Um 14:02 aktualisiert“).
     var statusText: String {
+        if offline && laedt.isEmpty { return String(localized: "Keine Verbindung") }
         if !laedt.isEmpty { return String(localized: "Nach E‑Mails suchen …") }
         if !ausgang.isEmpty { return String(localized: "Senden …") }
         guard let d = letzteAktualisierung else { return "" }
@@ -647,9 +652,79 @@ final class MailStore {
 
     // MARK: Fehler
 
+    /// Netzwerkfehler erscheinen wie bei Apple nur als Status unten („Keine Verbindung“) und werden
+    /// selbst erneut versucht; Anmelde-, Zertifikats- und Serverfehler weiter als Hinweis.
     func melde(_ error: Error) {
         if error is CancellationError { return }
+        if Self.istVerbindungsfehler(error) {
+            offlineMelden()
+            return
+        }
         fehler = error.localizedDescription
+    }
+
+    static func istVerbindungsfehler(_ error: Error) -> Bool {
+        if case MailFehler.verbindung = error { return true }
+        if let u = error as? URLError {
+            switch u.code {
+            case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost, .cannotFindHost,
+                 .dnsLookupFailed, .dataNotAllowed, .internationalRoamingOff, .callIsActive:
+                return true
+            default: return false
+            }
+        }
+        return false
+    }
+
+    // MARK: Offline / erneut versuchen
+
+    /// Kein Server erreichbar (Status „Keine Verbindung“ statt Fehlerdialog)
+    private(set) var offline = false
+    /// Abstände der automatischen Wiederholungen nach einem Verbindungsfehler
+    var wiederholAbstaende: [Duration] = [.seconds(2), .seconds(5), .seconds(15)]
+    /// Was beim Wiederholen passiert (Standard: alles neu laden; Tests setzen eigene Aktion)
+    var wiederholAktion: (@MainActor () async -> Void)?
+    private(set) var wiederholZaehler = 0
+    private var wiederholTask: Task<Void, Never>?
+    private let pfadMonitor = NWPathMonitor()
+
+    func offlineMelden() {
+        offline = true
+        guard wiederholTask == nil else { return }
+        let abstaende = wiederholAbstaende
+        wiederholTask = Task { [weak self] in
+            for a in abstaende {
+                try? await Task.sleep(for: a)
+                guard let self, !Task.isCancelled, self.offline else { break }
+                self.wiederholZaehler += 1
+                await self.erneutVersuchen()
+            }
+            self?.wiederholTask = nil
+        }
+    }
+
+    func verbindungOK() {
+        offline = false
+        wiederholTask?.cancel()
+        wiederholTask = nil
+    }
+
+    func erneutVersuchen() async {
+        if let a = wiederholAktion { await a() } else { await aktualisierenAlles() }
+    }
+
+    /// Netz wieder da oder App wieder aktiv (z. B. nach der Abfrage „Lokales Netzwerk“): sofort neu versuchen.
+    func verbindungVielleichtWieder() {
+        guard offline else { return }
+        Task { await erneutVersuchen() }
+    }
+
+    private func pfadBeobachten() {
+        pfadMonitor.pathUpdateHandler = { [weak self] pfad in
+            guard pfad.status == .satisfied else { return }
+            Task { @MainActor in self?.verbindungVielleichtWieder() }
+        }
+        pfadMonitor.start(queue: DispatchQueue(label: "homepost.netzpfad"))
     }
 }
 

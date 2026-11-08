@@ -20,6 +20,7 @@ struct HomePostApp: App {
         .onChange(of: phase) { _, neu in
             if neu == .background { Self.abrufPlanen() }
             if neu == .active {
+                store.verbindungVielleichtWieder()
                 Task { try? await UNUserNotificationCenter.current().setBadgeCount(store.ungelesenGesamt) }
             }
         }

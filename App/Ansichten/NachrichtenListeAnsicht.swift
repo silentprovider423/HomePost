@@ -112,7 +112,7 @@ struct NachrichtenListeAnsicht: View {
             return String(localized: "Gefiltert nach: \(ListenFilter.allCases.filter(filter.contains).map(\.kurz).joined(separator: ", "))")
         }
         let ungelesen = (store.listen[quelle] ?? []).filter { !$0.gelesen }.count
-        if store.laedt.contains(quelle) || ungelesen == 0 { return store.statusText }
+        if store.offline || store.laedt.contains(quelle) || ungelesen == 0 { return store.statusText }
         return String(localized: "\(ungelesen) ungelesen")
     }
 
