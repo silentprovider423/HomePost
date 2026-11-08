@@ -23,6 +23,7 @@ struct VerfassenAnsicht: View {
     @State private var fotoAuswahl: [PhotosPickerItem] = []
     @State private var fotosZeigen = false
     @State private var dateienZeigen = false
+    @State private var scannerZeigen = false
     @State private var vorbereitet = false
     @State private var anfang = ""
     @State private var inReplyTo: String?
@@ -99,6 +100,9 @@ struct VerfassenAnsicht: View {
                     Menu {
                         Button("Foto auswählen", systemImage: "photo.on.rectangle") { fotosZeigen = true }
                         Button("Datei anhängen", systemImage: "doc") { dateienZeigen = true }
+                        if DokumentScanner.verfuegbar {
+                            Button("Dokument scannen", systemImage: "doc.viewfinder") { scannerZeigen = true }
+                        }
                         if !originalAnhaenge.isEmpty {
                             Button("Anhänge der Original-E‑Mail übernehmen", systemImage: "paperclip") {
                                 Task { await originalAnhaengeHolen() }
@@ -126,6 +130,13 @@ struct VerfassenAnsicht: View {
             .onChange(of: fotoAuswahl) { _, neu in Task { await fotosUebernehmen(neu) } }
             .fileImporter(isPresented: $dateienZeigen, allowedContentTypes: [.item], allowsMultipleSelection: true) { r in
                 if case .success(let urls) = r { dateienUebernehmen(urls) }
+            }
+            .fullScreenCover(isPresented: $scannerZeigen) {
+                DokumentScanner { a in
+                    if let a { anhaenge.append(a) }
+                    scannerZeigen = false
+                }
+                .ignoresSafeArea()
             }
             .task { if !vorbereitet { await vorbereiten() } }
         }
@@ -321,7 +332,8 @@ struct VerfassenAnsicht: View {
             inReplyTo = n.inReplyTo
             referenzen = n.referenzen
         }
-        anfang = zusammenfassung
+        // wieder aufgenommene E-Mails gelten als geändert (beim Abbrechen fragen)
+        if case .wiederaufnehmen = auftrag.art { anfang = "" } else { anfang = zusammenfassung }
     }
 
     private func eindeutig(_ l: [MailAdresse]) -> [MailAdresse] {

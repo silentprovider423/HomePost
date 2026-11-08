@@ -54,6 +54,7 @@ struct VerfassenAuftrag: Identifiable {
 
 struct RootAnsicht: View {
     @Environment(MailStore.self) private var store
+    @Environment(\.scenePhase) private var phase
     @State private var pfad = NavigationPath()
 
     var body: some View {
@@ -79,6 +80,11 @@ struct RootAnsicht: View {
                     if !store.debugKonten {
                         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
                     }
+                    // solange die App offen ist: regelmäßig abrufen (IMAP IDLE/JMAP-Push wären der nächste Schritt)
+                    while !Task.isCancelled {
+                        try? await Task.sleep(for: .seconds(120))
+                        if phase == .active { await store.laden(.alleEingaenge) }
+                    }
                 }
             }
         }
@@ -97,18 +103,16 @@ struct RootAnsicht: View {
     @ViewBuilder private var hinweise: some View {
         VStack(spacing: 8) {
             ForEach(store.ausgang) { e in
-                GlasHinweis(text: String(localized: "E‑Mail wird gesendet …"), knopf: "Senden widerrufen") {
+                GlasHinweis(text: String(localized: "E‑Mail wird gesendet …"), knopf: "Senden widerrufen", kennung: "sendenWiderrufen") {
                     store.sendenWiderrufen(e.id)
                 }
-                .accessibilityIdentifier("sendenWiderrufen")
             }
             if let w = store.widerruf {
-                GlasHinweis(text: w.text, knopf: "Widerrufen") { Task { await store.widerrufen() } }
+                GlasHinweis(text: w.text, knopf: "Widerrufen", kennung: "widerrufen") { Task { await store.widerrufen() } }
                     .task(id: w.id) {
                         try? await Task.sleep(for: .seconds(6))
                         if store.widerruf?.id == w.id { store.widerruf = nil }
                     }
-                    .accessibilityIdentifier("widerrufen")
             }
         }
         .padding(.bottom, 70)

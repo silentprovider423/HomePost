@@ -7,6 +7,7 @@ struct PostfaecherAnsicht: View {
     @State private var einstellungen = false
     @State private var neuesPostfach: UUID?
     @State private var neuesEltern: Postfach?
+    @State private var neuerName = ""
     @State private var umbenennen: (UUID, Postfach)?
     @State private var loeschen: (UUID, Postfach)?
     @State private var zugeklappt: Set<UUID> = []
@@ -36,28 +37,41 @@ struct PostfaecherAnsicht: View {
                 }
                 .sharedBackgroundVisibility(.hidden)
             }
+            if bearbeiten {
+                // wie Apple: „Neues Postfach“ unten links im Bearbeiten-Modus
+                ToolbarItem(placement: .bottomBar) {
+                    Button("Neues Postfach") {
+                        neuesEltern = nil
+                        neuesPostfach = store.standardKonto?.id
+                    }
+                    .accessibilityIdentifier("neuesPostfachLeiste")
+                }
+            }
             ToolbarSpacer(.flexible, placement: .bottomBar)
             ToolbarItem(placement: .bottomBar) { VerfassenKnopf() }
         }
         .sheet(isPresented: $einstellungen) { EinstellungenAnsicht() }
-        .alert("Neues Postfach", isPresented: Binding(get: { neuesPostfach != nil }, set: { if !$0 { neuesPostfach = nil } })) {
-            NamensEingabe(titel: "", aktionTitel: "Sichern") { name, eltern in
-                if let k = neuesPostfach { let e = neuesEltern; Task { await store.postfachAnlegen(k, name: name, in: e) } }
-            }
-        } message: {
-            Text("Gib einen Namen für das neue Postfach ein.")
+        .sheet(item: Binding(get: { neuesPostfach.map { NeuesPostfachAuftrag(konto: $0, eltern: neuesEltern) } },
+                             set: { if $0 == nil { neuesPostfach = nil } })) { a in
+            NeuesPostfachAnsicht(konto: a.konto, eltern: a.eltern)
         }
-        .alert("Postfach umbenennen", isPresented: Binding(get: { umbenennen != nil }, set: { if !$0 { umbenennen = nil } })) {
-            NamensEingabe(titel: umbenennen?.1.name ?? "", aktionTitel: "Sichern") { name, _ in
-                if let (k, p) = umbenennen { Task { await store.postfachUmbenennen(k, p, in: name) } }
+        .background {
+            Color.clear.alert("Postfach umbenennen", isPresented: Binding(get: { umbenennen != nil }, set: { if !$0 { umbenennen = nil } })) {
+                TextField("Name", text: $neuerName).accessibilityIdentifier("postfachName")
+                Button("Abbrechen", role: .cancel) { neuerName = "" }
+                Button("Sichern") {
+                    let n = neuerName.trimmingCharacters(in: .whitespaces)
+                    if let (k, p) = umbenennen, !n.isEmpty { Task { await store.postfachUmbenennen(k, p, in: n) } }
+                    neuerName = ""
+                }
             }
         }
         .confirmationDialog("Postfach löschen?", isPresented: Binding(get: { loeschen != nil }, set: { if !$0 { loeschen = nil } }),
-                            titleVisibility: .visible) {
+                            titleVisibility: .visible, presenting: loeschen.map { LoeschZiel(konto: $0.0, postfach: $0.1) }) { z in
             Button("Postfach löschen", role: .destructive) {
-                if let (k, p) = loeschen { Task { await store.postfachLoeschen(k, p) } }
+                Task { await store.postfachLoeschen(z.konto, z.postfach) }
             }
-        } message: {
+        } message: { _ in
             Text("Alle E‑Mails in diesem Postfach werden auf dem Server gelöscht.")
         }
     }
@@ -165,7 +179,7 @@ struct PostfaecherAnsicht: View {
         .accessibilityIdentifier("postfach-\(name)")
         .contextMenu {
             if p.rolle == .keine {
-                Button("Umbenennen", systemImage: "pencil") { umbenennen = (k.id, p) }
+                Button("Umbenennen", systemImage: "pencil") { neuerName = p.name; umbenennen = (k.id, p) }
                 Button("Neues Unterpostfach …", systemImage: "folder.badge.plus") { neuesEltern = p; neuesPostfach = k.id }
                 Button("Postfach löschen", systemImage: "trash", role: .destructive) { loeschen = (k.id, p) }
             }
@@ -173,27 +187,8 @@ struct PostfaecherAnsicht: View {
         .swipeActions(edge: .trailing) {
             if p.rolle == .keine {
                 Button("Löschen", systemImage: "trash", role: .destructive) { loeschen = (k.id, p) }
-                Button("Umbenennen", systemImage: "pencil") { umbenennen = (k.id, p) }.tint(.gray)
+                Button("Umbenennen", systemImage: "pencil") { neuerName = p.name; umbenennen = (k.id, p) }.tint(.gray)
             }
-        }
-    }
-}
-
-/// Textfeld im Hinweisfenster (Name eines Postfachs).
-private struct NamensEingabe: View {
-    let titel: String
-    let aktionTitel: LocalizedStringKey
-    let fertig: (String, Postfach?) -> Void
-    @State private var name = ""
-
-    var body: some View {
-        TextField("Name", text: $name)
-            .onAppear { name = titel }
-            .accessibilityIdentifier("postfachName")
-        Button("Abbrechen", role: .cancel) {}
-        Button(aktionTitel) {
-            let n = name.trimmingCharacters(in: .whitespaces)
-            if !n.isEmpty { fertig(n, nil) }
         }
     }
 }
@@ -233,5 +228,77 @@ struct VerfassenKnopf: View {
                 }
             }
         }
+    }
+}
+
+private struct LoeschZiel {
+    let konto: UUID
+    let postfach: Postfach
+}
+
+private struct NeuesPostfachAuftrag: Identifiable {
+    var id: String { konto.uuidString + (eltern?.id ?? "") }
+    let konto: UUID
+    let eltern: Postfach?
+}
+
+/// „Neues Postfach“ wie Apple: Name + „Ort des Postfachs“ (Account bzw. übergeordnetes Postfach).
+struct NeuesPostfachAnsicht: View {
+    @Environment(MailStore.self) private var store
+    @Environment(\.dismiss) private var schliessen
+    @State var konto: UUID
+    @State var eltern: Postfach?
+    @State private var name = ""
+    @FocusState private var fokus: Bool
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name", text: $name)
+                        .focused($fokus)
+                        .accessibilityIdentifier("postfachName")
+                }
+                Section("Ort des Postfachs") {
+                    ForEach(store.konten) { k in
+                        ortZeile(k.name, symbol: "person.crop.circle", gewaehlt: konto == k.id && eltern == nil, tiefe: 0) {
+                            konto = k.id; eltern = nil
+                        }
+                        ForEach((store.postfaecher[k.id] ?? []).filter { $0.rolle == .keine }) { p in
+                            ortZeile(p.name, symbol: "folder", gewaehlt: konto == k.id && eltern?.id == p.id, tiefe: p.tiefe + 1) {
+                                konto = k.id; eltern = p
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Neues Postfach")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Abbrechen", role: .cancel) { schliessen() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Sichern") {
+                        let n = name.trimmingCharacters(in: .whitespaces)
+                        let k = konto, e = eltern
+                        Task { await store.postfachAnlegen(k, name: n, in: e) }
+                        schliessen()
+                    }
+                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .accessibilityIdentifier("postfachSichern")
+                }
+            }
+            .onAppear { fokus = true }
+        }
+    }
+
+    private func ortZeile(_ titel: String, symbol: String, gewaehlt: Bool, tiefe: Int, _ aktion: @escaping () -> Void) -> some View {
+        Button(action: aktion) {
+            HStack {
+                Label(titel, systemImage: symbol).padding(.leading, CGFloat(tiefe) * 16)
+                Spacer()
+                if gewaehlt { Image(systemName: "checkmark").foregroundStyle(.tint) }
+            }
+        }
+        .foregroundStyle(.primary)
     }
 }

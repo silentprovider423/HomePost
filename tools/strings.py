@@ -93,7 +93,8 @@ EN = {
     "Zu VIP hinzufügen": "Add to VIP", "https://mail.example.com": "https://mail.example.com",
     "iOS ruft im Hintergrund in unregelmäßigen Abständen neue E‑Mails ab. Sofortige Mitteilungen bräuchten einen eigenen Push-Dienst auf deinem Server.":
         "iOS fetches new mail in the background at irregular intervals. Instant notifications would need your own push service on your server.",
-    "Übersicht": "Quick Look", "%lld ausgewählt ": "%lld selected",
+    "Übersicht": "Quick Look", "Dokument scannen": "Scan Document", "Gescanntes Dokument": "Scanned Document",
+    "Ort des Postfachs": "Mailbox Location", "%lld ausgewählt ": "%lld selected",
 }
 
 

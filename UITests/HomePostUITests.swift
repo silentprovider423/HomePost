@@ -64,6 +64,8 @@ final class HomePostUITests: XCTestCase {
         XCTAssertTrue(fotos.waitForExistence(timeout: 60))
         fotos.tap()
         XCTAssertTrue(element("anhang-See-Morgen.png").waitForExistence(timeout: 30), "Anhang fehlt")
+        _ = app.webViews.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Wetter'")).firstMatch.waitForExistence(timeout: 20)
+        sleep(2)
         bild("4-anhaenge")
         app.navigationBars.buttons.element(boundBy: 0).tap()
         let news = zeile("Neu im November")
@@ -139,7 +141,7 @@ final class HomePostUITests: XCTestCase {
         element("feldBetreff").tap()
         element("feldBetreff").typeText("Widerrufen")
         element("senden").tap()
-        let knopf = app.buttons["Senden widerrufen"]
+        let knopf = element("sendenWiderrufen")
         XCTAssertTrue(knopf.waitForExistence(timeout: 10))
         knopf.tap()
         // Verfassen-Fenster ist wieder offen, mit dem Betreff
@@ -155,17 +157,19 @@ final class HomePostUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(element("postfach-Anna Berger").waitForExistence(timeout: 60))
         app.buttons["Bearbeiten"].firstMatch.tap()
-        let neu = element("neuesPostfach")
+        let neu = element("neuesPostfachLeiste")
         XCTAssertTrue(neu.waitForExistence(timeout: 10))
         neu.tap()
-        let feld = app.textFields["postfachName"]
+        let feld = element("postfachName")
         XCTAssertTrue(feld.waitForExistence(timeout: 10))
         let name = "UITest\(Int.random(in: 100...999))"
+        feld.tap()
         feld.typeText(name)
-        app.alerts.buttons["Sichern"].tap()
+        element("postfachSichern").tap()
         app.buttons["Fertig"].firstMatch.tap()
         let ordner = element("postfach-\(name)")
-        XCTAssertTrue(ordner.waitForExistence(timeout: 30), "neues Postfach fehlt")
+        for _ in 0..<6 where !ordner.waitForExistence(timeout: 5) { app.swipeUp() }
+        XCTAssertTrue(ordner.waitForExistence(timeout: 20), "neues Postfach fehlt")
         ordner.swipeLeft()
         app.buttons["Löschen"].firstMatch.tap()
         let bestaetigen = app.buttons["Postfach löschen"]

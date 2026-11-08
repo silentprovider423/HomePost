@@ -8,7 +8,7 @@ rm -rf build-ipa
 xcodebuild -project HomePost.xcodeproj -scheme HomePost -configuration Release \
   -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build-ipa \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-  OTHER_SWIFT_FLAGS="-file-prefix-map $PWD=." OTHER_CFLAGS="-ffile-prefix-map=$PWD=." \
+  OTHER_SWIFT_FLAGS="\$(inherited) -file-prefix-map $PWD=." OTHER_CFLAGS="\$(inherited) -ffile-prefix-map=$PWD=." \
   STRIP_INSTALLED_PRODUCT=YES DEPLOYMENT_POSTPROCESSING=YES STRIP_STYLE=non-global -quiet build
 APP="build-ipa/Build/Products/Release-iphoneos/HomePost.app"
 [ -d "$APP" ] || { echo "FEHLER: $APP nicht gefunden"; exit 1; }

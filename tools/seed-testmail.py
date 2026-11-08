@@ -222,7 +222,7 @@ def seed():
               "Bin dabei! Ich bringe Brot und Getränke mit.\n\nBen\n\n" + "Am Samstag schrieb Anna:\n" +
               quote("am Samstag ab 17 Uhr grillen wir bei mir im Garten."), d(3, 3), cc=[C], reply_to_msg=t1)
     t1c = Msg("clara", [A], "Re: Grillfest am Samstag",
-              "Ich mache meinen Kartoffelsalat 🥗 und bringe einen Nachtisch mit.\n\nBis Samstag!\nClara",
+              "Ich mache meinen Kartoffelsalat und bringe einen Nachtisch mit.\n\nBis Samstag!\nClara",
               d(2, 20), cc=[B], reply_to_msg=t1b)
     t1d = Msg("anna", [B, C], "Re: Grillfest am Samstag", "Super, dann haben wir alles. Bis Samstag!\n\nAnna",
               d(1, 22), reply_to_msg=t1c)
@@ -239,7 +239,7 @@ def seed():
              "Hallo Anna,\n\nhier die zwei schönsten Bilder vom Sonntag. Das Wetter war einfach perfekt!\n\nClara",
              d(5, 4), attachments=[("See-Morgen.png", "image/png", png(320, 220, (120, 170, 230), (20, 70, 120))),
                                    ("See-Abend.png", "image/png", png(320, 220, (250, 170, 110), (60, 40, 110)))])
-    t2b = Msg("anna", [C], "Re: Fotos vom Ausflug an den See", "Wunderschön! Das zweite hänge ich mir auf. 😊\n\nAnna",
+    t2b = Msg("anna", [C], "Re: Fotos vom Ausflug an den See", "Wunderschön! Das zweite hänge ich mir auf.\n\nAnna",
               d(4, 21), reply_to_msg=t2)
     put("clara", SENT, t2, "\\Seen")
     put("anna", INBOX, t2, "\\Seen \\Flagged \\Answered $MailFlagBit0")
@@ -298,7 +298,7 @@ def seed():
              "Herzlichen Glückwunsch! Klicken Sie hier, um Ihren Preis abzuholen.", d(2, 8),
              frm_raw="Gewinnspiel <gewinn@lotterie.test>")
     put("anna", JUNK, t8, "")
-    t9 = Msg("clara", [A], "Alte Erinnerung: Bücher zurückgeben", "Denk an die Bücher! 📚", d(20))
+    t9 = Msg("clara", [A], "Alte Erinnerung: Bücher zurückgeben", "Denk an die Bücher!", d(20))
     put("anna", TRASH, t9, "\\Seen")
     t10 = Msg("anna", [B], "Urlaubsplanung 2027",
               "Hallo Ben,\n\nwas hältst du von zwei Wochen Schweden im Juni? Ich habe schon", d(0, 5))

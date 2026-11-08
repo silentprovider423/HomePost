@@ -95,6 +95,7 @@ enum MailDatum {
 struct GlasHinweis: View {
     let text: String
     let knopf: LocalizedStringKey
+    var kennung: String = ""
     let aktion: () -> Void
 
     var body: some View {
@@ -102,6 +103,7 @@ struct GlasHinweis: View {
             Text(text).font(.subheadline).lineLimit(2)
             Spacer(minLength: 4)
             Button(knopf, action: aktion).font(.subheadline.weight(.semibold))
+                .accessibilityIdentifier(kennung)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 12)

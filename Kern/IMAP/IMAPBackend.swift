@@ -339,8 +339,13 @@ actor IMAPBackend: MailBackend {
 
     static func vorschauText(_ t: String) -> String {
         // zitierte Zeilen und Leerraum entfernen, wie Apples Vorschau
-        let zeilen = t.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.hasPrefix(">") && !$0.isEmpty }
+        var zeilen: [String] = []
+        for z in t.split(separator: "\n").map({ $0.trimmingCharacters(in: .whitespaces) }) {
+            if z.hasPrefix(">") || z.isEmpty { continue }
+            // Zitat-Einleitung („Am … schrieb …:“, „On … wrote:“) beendet die Vorschau
+            if z.hasSuffix(":") && (z.contains("schrieb") || z.contains("wrote")) { break }
+            zeilen.append(z)
+        }
         return String(zeilen.joined(separator: " ").prefix(220))
     }
 
